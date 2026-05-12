@@ -33,7 +33,8 @@ open util/boolean
 -- ============================================================
 -- 1. ENUMERACIONES
 -- ============================================================
-
+abstract sig EstadoActivo{}
+onse sig Activado extends EstadoActivo{}
 abstract sig EstadoVehiculo {}
 one sig Operativo, Mantenimiento extends EstadoVehiculo {}
 
@@ -123,10 +124,10 @@ sig vAutonomo {
     nivelBateria      : one Int,
     numAsientos       : one Int,
     velocidad         : one Int,
-    kilometrajeTot    : one Int,    -- aprox. Real; ver limitación [2] y [3]
+    kilometrajeTot    : one Int,    
     cierreSeguridad   : one Bool,
     maleteroDisponible: one Bool,
-    disponible        : one Bool,
+    disponible        : lone Activado,
     -- Asociaciones
     sensores          : set Sensor,           -- VehiculoSensores (1..*)
     pasajeros         : set Pasajero,         -- VehiculoPasajeros (0..*)
@@ -259,9 +260,8 @@ fact ReglasDelSistema {
 
     -- INV 17 [OCL: disponibleAlCargar]
     -- Al alcanzar el 85% de batería, el vehículo pasa a disponible automáticamente.
-    -- NOTA [limitación 3]: ídem INV 16.
     all v: vAutonomo |
-        v.nivelBateria = 85 implies v.disponible = True
+        v.nivelBateria = 85 implies some v.disponible
 }
 
 
