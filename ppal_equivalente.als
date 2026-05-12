@@ -34,7 +34,7 @@ open util/boolean
 -- 1. ENUMERACIONES
 -- ============================================================
 abstract sig EstadoActivo{}
-onse sig Activado extends EstadoActivo{}
+one sig Activado extends EstadoActivo{}
 abstract sig EstadoVehiculo {}
 one sig Operativo, Mantenimiento extends EstadoVehiculo {}
 
@@ -137,6 +137,9 @@ sig vAutonomo {
     mantenimientos    : set RegistroMantenimiento -- VehiculoMantenimiento (1..*)
 }
 
+-- Mejora creativa
+sig ZonaSierra extends Zona {}
+
 
 -- ============================================================
 -- 3. INTEGRIDAD ESTRUCTURAL DE ASOCIACIONES
@@ -164,6 +167,16 @@ fact IntegridadAsociaciones {
 
     -- VehiculoEstacion: la estación asignada al vehículo debe estar en su misma zona
     all v: vAutonomo | some v.estacion implies v.estacion in v.zona.estaciones
+    --Zona Exterior (Mejora creativa): para las rutas que rodean la ciudad se necesita mayor batería
+    fact RestriccionesZonaExterior {
+    -- Bateria minima del 40% para operar en zona de sierra
+    all v: vAutonomo | v.zona in ZonaExterior implies v.nivelBateria >= 40
+
+    -- Las rutas asignadas en la zona exterior nunca son prioritarias
+    all v: vAutonomo |
+        v.zona in ZonaSierra implies
+        (some v.ruta implies v.ruta.esPrioritaria = False)
+}
 }
 
 
@@ -363,10 +376,10 @@ pred activarModoAutonomo [v, v2: vAutonomo] {
 pred finalizarCarga [v, v2: vAutonomo] {
     -- Precondiciones
     v.zona.tipo = Carga
-    v.nivelBateria = 85   -- NOTA [limitación 3]: requiere "for 8 Int" mínimo
+    v.nivelBateria = 85
 
     -- Postcondiciones
-    v2.disponible = True
+    v2.disponible = Activado
     v2.velocidad  = 0
 
     -- Frame conditions
